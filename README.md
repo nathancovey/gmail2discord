@@ -6,7 +6,7 @@
 </head>
 <body>
 <h1>Gmail to Discord Notification Tool</h1>
-<p>This open-source tool sends scheduled notifications to a Discord channel whenever a new email is received in a specified Gmail account. It's designed to help teams stay informed about important updates directly within their communication channels.</p>
+<p>This open-source tool sends a message in Discord when your Gmail gets an email from a specified email address. Don't pay for Zapier because this is free. It's designed to help teams stay informed about important updates directly within their communication channels.</p>
 
 <h2>Features</h2>
 <ul>
