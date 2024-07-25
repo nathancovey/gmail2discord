@@ -47,10 +47,11 @@ def main():
 
     # Calculate the timestamp for 10 minutes ago
     ten_minutes_ago = datetime.utcnow() - timedelta(minutes=10)
-    ten_minutes_ago_str = ten_minutes_ago.strftime('%Y/%m/%d %H:%M:%S')
+    ten_minutes_ago_str = ten_minutes_ago.strftime('%s')  # Unix epoch time in seconds
 
     # Call the Gmail API with a query to find messages from the last 10 minutes
     query = f'from:loopsbot@mail.loops.so after:{ten_minutes_ago_str}'
+    print(f"Query: {query}")  # Debugging output
     results = service.users().messages().list(userId='me', q=query).execute()
     messages = results.get('messages', [])
 
@@ -59,7 +60,8 @@ def main():
     else:
         for message in messages:
             msg = service.users().messages().get(userId='me', id=message['id']).execute()
-            
+            print(f"Processing message ID: {message['id']}")  # Debugging output
+
             # Try to get the timestamp from the email metadata
             try:
                 timestamp = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
