@@ -47,7 +47,7 @@ def main():
 
     # Calculate the timestamp for 10 minutes ago
     ten_minutes_ago = datetime.utcnow() - timedelta(minutes=10)
-    ten_minutes_ago_str = ten_minutes_ago.strftime('%Y/%m/%d %H:%M:%S')
+    ten_minutes_ago_str = ten_minutes_ago.strftime('%s')  # Unix epoch time in seconds
 
     # Call the Gmail API with a query to find messages from the last 10 minutes
     query = f'from:loopsbot@mail.loops.so after:{ten_minutes_ago_str}'
@@ -71,7 +71,7 @@ def main():
             except StopIteration:
                 formatted_timestamp = "This is a test."
 
-            # Get the Discord webhook URL from environment variables
+            # Send message to Discord
             webhook_url = os.environ['DISCORD_WEBHOOK_URL']
             data = {
                 'content': f'Someone just signed up for CodeClimbers via the website! 🚀\n\nTimestamp: {formatted_timestamp}\n\n[[[ Keep Climbing ]]]'
