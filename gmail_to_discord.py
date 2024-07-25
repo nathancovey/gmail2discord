@@ -19,6 +19,13 @@ def main():
             f.write(credentials_json)
     
     creds = None
+    # Decode the base64 encoded token.json and write to a file
+    if 'TOKEN_JSON' in os.environ:
+        token_base64 = os.environ['TOKEN_JSON']
+        token_json = base64.b64decode(token_base64).decode('utf-8')
+        with open('token.json', 'w') as f:
+            f.write(token_json)
+
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
