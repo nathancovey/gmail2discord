@@ -11,6 +11,13 @@ from googleapiclient.discovery import build
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 def main():
+    # Decode the base64 encoded credentials and write to a file
+    if 'GOOGLE_CREDENTIALS' in os.environ:
+        credentials_base64 = os.environ['GOOGLE_CREDENTIALS']
+        credentials_json = base64.b64decode(credentials_base64).decode('utf-8')
+        with open('credentials.json', 'w') as f:
+            f.write(credentials_json)
+    
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -41,14 +48,17 @@ def main():
         for message in messages:
             msg = service.users().messages().get(userId='me', id=message['id']).execute()
             
-            # Get the timestamp from the email metadata
-            timestamp = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
-            # Format the timestamp to a readable format
-            timestamp_dt = datetime.strptime(timestamp, '%a, %d %b %Y %H:%M:%S %z')
-            formatted_timestamp = timestamp_dt.strftime('%a, %d %b %Y %H:%M:%S %z')
+            # Try to get the timestamp from the email metadata
+            try:
+                timestamp = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
+                # Format the timestamp to a readable format
+                timestamp_dt = datetime.strptime(timestamp, '%a, %d %b %Y %H:%M:%S %z')
+                formatted_timestamp = timestamp_dt.strftime('%a, %d %b %Y %H:%M:%S %z')
+            except StopIteration:
+                formatted_timestamp = "This is a test."
 
-            # Prepare the message body
-            msg_str = base64.urlsafe_b64decode(msg['payload']['body']['data'].encode('ASCII')).decode('utf-8')
+            # Prepare the message body (not used in this case)
+            msg_str = ""
 
             # Send message to Discord
             webhook_url = 'https://discord.com/api/webhooks/1266081211978219666/h3fWkbdcmlNakJww9S-QWibCHSvss0U2MdtAjbcrypiLZfEmUpRcPCnAu3vObYMEBLVP'
