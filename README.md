@@ -10,7 +10,7 @@
 
 <h2>Features</h2>
 <ul>
-<li><strong>Scheduled Notifications</strong>: Sends a message to a specified Discord channel every 10 minutes for each email received from a specified email address.</li>
+<li><strong>Scheduled Notifications</strong>: Sends a message to a specified Discord channel for each email received from a specified email address. Triggers every 10 minutes.</li>
 <li><strong>Free Tools</strong>: Utilizes free tiers of Google Cloud and Heroku, ensuring no cost under normal usage.</li>
 <li><strong>Customizable</strong>: Easily modify the script to fit your needs.</li>
 <li><strong>Open Source</strong>: Free to use, modify, and distribute.</li>
