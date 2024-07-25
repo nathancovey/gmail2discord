@@ -1,11 +1,15 @@
 import os
 import base64
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # If modifying these SCOPES, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
@@ -45,8 +49,13 @@ def main():
 
     service = build('gmail', 'v1', credentials=creds)
 
-    # Call the Gmail API
-    results = service.users().messages().list(userId='me', q='from:loopsbot@mail.loops.so').execute()
+    # Calculate the timestamp for 10 minutes ago
+    ten_minutes_ago = datetime.utcnow() - timedelta(minutes=10)
+    ten_minutes_ago_str = ten_minutes_ago.strftime('%Y/%m/%d %H:%M:%S')
+
+    # Call the Gmail API with a query to find messages from the last 10 minutes
+    query = f'from:loopsbot@mail.loops.so after:{ten_minutes_ago_str}'
+    results = service.users().messages().list(userId='me', q=query).execute()
     messages = results.get('messages', [])
 
     if not messages:
@@ -63,9 +72,6 @@ def main():
                 formatted_timestamp = timestamp_dt.strftime('%a, %d %b %Y %H:%M:%S %z')
             except StopIteration:
                 formatted_timestamp = "This is a test."
-
-            # Prepare the message body (not used in this case)
-            msg_str = ""
 
             # Send message to Discord
             webhook_url = 'https://discord.com/api/webhooks/1266081211978219666/h3fWkbdcmlNakJww9S-QWibCHSvss0U2MdtAjbcrypiLZfEmUpRcPCnAu3vObYMEBLVP'
