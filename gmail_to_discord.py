@@ -1,7 +1,5 @@
 import os
 import base64
-import requests
-from datetime import datetime, timedelta
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -10,12 +8,10 @@ from googleapiclient.discovery import build
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 def save_token(creds):
-    """Save the credentials to a token.json file."""
     with open('token.json', 'w') as token:
         token.write(creds.to_json())
 
 def load_credentials():
-    """Load credentials from the environment and file."""
     if 'GOOGLE_CREDENTIALS' in os.environ:
         credentials_base64 = os.environ['GOOGLE_CREDENTIALS']
         credentials_json = base64.b64decode(credentials_base64).decode('utf-8')
@@ -35,9 +31,8 @@ def load_credentials():
     return creds
 
 def authenticate():
-    """Authenticate the user and obtain new credentials."""
     flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-    creds = flow.run_local_server(port=0)
+    creds = flow.run_console()
     save_token(creds)
     return creds
 
