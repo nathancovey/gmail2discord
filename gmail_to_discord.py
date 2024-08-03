@@ -25,10 +25,6 @@ def save_token(creds):
     token_base64 = base64.b64encode(token_json.encode()).decode()
     os.environ['TOKEN_JSON'] = token_base64
     logger.info("Token saved to environment variable")
-    
-    # Save to Heroku config
-    os.system(f"heroku config:set TOKEN_JSON={token_base64} --app cryptic-depths-88362")
-    logger.info("Token saved to Heroku config")
 
 def load_credentials():
     """Load credentials from the environment."""
@@ -99,7 +95,51 @@ def ensure_valid_credentials():
     logger.info("Credentials invalid. Starting new authentication.")
     return authenticate()
 
-# ... (rest of the functions remain the same)
+def send_discord_notification(timestamp):
+    """Send a notification to Discord."""
+    if not DISCORD_WEBHOOK_URL:
+        logger.error("Discord webhook URL is not set")
+        return
+
+    data = {
+        'content': f'Someone just signed up for CodeClimbers via the website! 🚀\n\nTimestamp: {timestamp}\n\n[[[ Keep Climbing ]]]'
+    }
+    try:
+        response = requests.post(DISCORD_WEBHOOK_URL, json=data)
+        response.raise_for_status()
+        logger.info('Discord notification sent successfully')
+    except requests.exceptions.RequestException as e:
+        logger.error(f'Failed to send Discord notification: {e}')
+
+def check_emails(service):
+    """Check for new emails and send notifications."""
+    check_time = datetime.utcnow() - timedelta(minutes=CHECK_INTERVAL_MINUTES)
+    check_time_str = check_time.isoformat() + 'Z'
+    query = f'from:{MONITORED_EMAIL} after:{check_time_str}'
+    logger.info(f"Checking for emails with query: {query}")
+
+    try:
+        results = service.users().messages().list(userId='me', q=query).execute()
+        messages = results.get('messages', [])
+        logger.info(f"Found {len(messages)} new messages")
+
+        for message in messages:
+            try:
+                msg = service.users().messages().get(userId='me', id=message['id']).execute()
+                headers = msg['payload']['headers']
+                timestamp = next((header['value'] for header in headers if header['name'] == 'Date'), None)
+                
+                if timestamp:
+                    timestamp_dt = datetime.strptime(timestamp, '%a, %d %b %Y %H:%M:%S %z')
+                    formatted_timestamp = timestamp_dt.strftime('%a, %d %b %Y %H:%M:%S %z')
+                else:
+                    formatted_timestamp = "Timestamp not available"
+
+                send_discord_notification(formatted_timestamp)
+            except Exception as e:
+                logger.error(f"Error processing message {message['id']}: {e}")
+    except HttpError as error:
+        logger.error(f'An error occurred while fetching messages: {error}')
 
 def main():
     try:
