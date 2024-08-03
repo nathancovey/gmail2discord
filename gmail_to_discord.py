@@ -95,14 +95,14 @@ def ensure_valid_credentials():
     logger.info("Credentials invalid. Starting new authentication.")
     return authenticate()
 
-def send_discord_notification(timestamp):
+def send_discord_notification(timestamp, subject):
     """Send a notification to Discord."""
     if not DISCORD_WEBHOOK_URL:
         logger.error("Discord webhook URL is not set")
         return
 
     data = {
-        'content': f'Someone just signed up for CodeClimbers via the website! 🚀\n\nTimestamp: {timestamp}\n\n[[[ Keep Climbing ]]]'
+        'content': f'New signup for CodeClimbers via the website! 🚀\n\nTimestamp: {timestamp}\nSubject: {subject}\n\n[[[ Keep Climbing ]]]'
     }
     try:
         response = requests.post(DISCORD_WEBHOOK_URL, json=data)
@@ -114,7 +114,7 @@ def send_discord_notification(timestamp):
 def check_emails(service):
     """Check for new emails and send notifications."""
     check_time = datetime.utcnow() - timedelta(minutes=CHECK_INTERVAL_MINUTES)
-    check_time_str = check_time.isoformat() + 'Z'
+    check_time_str = check_time.strftime('%Y/%m/%d %H:%M:%S')
     query = f'from:{MONITORED_EMAIL} after:{check_time_str}'
     logger.info(f"Checking for emails with query: {query}")
 
@@ -123,19 +123,31 @@ def check_emails(service):
         messages = results.get('messages', [])
         logger.info(f"Found {len(messages)} new messages")
 
+        if not messages:
+            logger.info("No new messages found in the specified time range.")
+            return
+
         for message in messages:
             try:
                 msg = service.users().messages().get(userId='me', id=message['id']).execute()
                 headers = msg['payload']['headers']
-                timestamp = next((header['value'] for header in headers if header['name'] == 'Date'), None)
                 
-                if timestamp:
-                    timestamp_dt = datetime.strptime(timestamp, '%a, %d %b %Y %H:%M:%S %z')
-                    formatted_timestamp = timestamp_dt.strftime('%a, %d %b %Y %H:%M:%S %z')
+                date = next((header['value'] for header in headers if header['name'].lower() == 'date'), "Date not available")
+                subject = next((header['value'] for header in headers if header['name'].lower() == 'subject'), "Subject not available")
+                
+                logger.info(f"Processing email - Date: {date}, Subject: {subject}")
+
+                if date != "Date not available":
+                    try:
+                        timestamp_dt = datetime.strptime(date, '%a, %d %b %Y %H:%M:%S %z')
+                        formatted_timestamp = timestamp_dt.strftime('%Y-%m-%d %H:%M:%S %Z')
+                    except ValueError:
+                        logger.warning(f"Could not parse date: {date}")
+                        formatted_timestamp = date
                 else:
                     formatted_timestamp = "Timestamp not available"
 
-                send_discord_notification(formatted_timestamp)
+                send_discord_notification(formatted_timestamp, subject)
             except Exception as e:
                 logger.error(f"Error processing message {message['id']}: {e}")
     except HttpError as error:
