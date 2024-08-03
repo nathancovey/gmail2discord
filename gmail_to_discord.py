@@ -1,17 +1,25 @@
 import os
 import base64
+import requests
+from datetime import datetime, timedelta
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 def save_token(creds):
+    """Save the credentials to a token.json file and update the environment variable."""
     with open('token.json', 'w') as token:
         token.write(creds.to_json())
 
+    # Update the base64 encoded token in Heroku environment variables
+    with open('token.json', 'rb') as token:
+        token_base64 = base64.b64encode(token.read()).decode('utf-8')
+        os.system(f'heroku config:set TOKEN_JSON={token_base64} --app cryptic-depths-88362')
+
 def load_credentials():
+    """Load credentials from the environment and file."""
     if 'GOOGLE_CREDENTIALS' in os.environ:
         credentials_base64 = os.environ['GOOGLE_CREDENTIALS']
         credentials_json = base64.b64decode(credentials_base64).decode('utf-8')
@@ -30,12 +38,6 @@ def load_credentials():
     
     return creds
 
-def authenticate():
-    flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
-    creds = flow.run_console()
-    save_token(creds)
-    return creds
-
 def main():
     creds = load_credentials()
     
@@ -47,9 +49,10 @@ def main():
             except Exception as e:
                 print(f"Error refreshing token: {e}")
                 os.remove('token.json')
-                creds = authenticate()
+                creds = None
         else:
-            creds = authenticate()
+            print("No valid credentials available.")
+            return  # Exit if no valid credentials
 
     service = build('gmail', 'v1', credentials=creds)
 
@@ -77,7 +80,7 @@ def main():
 
             webhook_url = os.environ['DISCORD_WEBHOOK_URL']
             data = {
-                'content': f'Someone just signed up for CodeClimbers via the website! 🚀\n\nTimestamp: {formatted_timestamp}\n\n[[[ Keep Climbing ]]]'
+                'content': f'Someone just signed up for CodeClimbers via the website!\n\nTimestamp: {formatted_timestamp}\n\n[[[ Keep Climbing ]]]'
             }
             response = requests.post(webhook_url, json=data)
             if response.status_code == 204:
