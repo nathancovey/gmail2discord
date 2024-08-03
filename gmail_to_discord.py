@@ -64,7 +64,7 @@ def main():
     print(f"Current time: {current_time_str}")
     print(f"Ten minutes ago: {ten_minutes_ago_str}")
 
-    query = ''  # Test with a simpler query
+    query = f'from:loopsbot@mail.loops.so after:{ten_minutes_ago_str}'
     print(f"Query: {query}")
 
     try:
