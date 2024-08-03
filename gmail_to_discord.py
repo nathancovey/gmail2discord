@@ -64,7 +64,8 @@ def main():
     print(f"Current time: {current_time_str}")
     print(f"Ten minutes ago: {ten_minutes_ago_str}")
 
-    query = f'from:loopsbot@mail.loops.so after:{ten_minutes_ago_str}'
+    # Simplify query to fetch all messages first
+    query = ''
     print(f"Query: {query}")
 
     try:
@@ -87,19 +88,24 @@ def main():
                 timestamp_dt = datetime.strptime(timestamp, '%a, %d %b %Y %H:%M:%S %z')
                 formatted_timestamp = timestamp_dt.strftime('%a, %d %b %Y %H:%M:%S %z')
                 print(f"Message timestamp: {formatted_timestamp}")
+
+                # Check if the message was received in the last 10 minutes
+                if timestamp_dt > ten_minutes_ago:
+                    webhook_url = os.environ['DISCORD_WEBHOOK_URL']
+                    data = {
+                        'content': f'Someone just signed up for CodeClimbers via the website!\n\nTimestamp: {formatted_timestamp}\n\n[[[ Keep Climbing ]]]'
+                    }
+                    response = requests.post(webhook_url, json=data)
+                    if response.status_code == 204:
+                        print('Message sent successfully.')
+                    else:
+                        print(f'Failed to send message. Response code: {response.status_code}')
+                else:
+                    print('Message received outside the 10-minute window.')
+
             except Exception as e:
                 formatted_timestamp = "This is a test."
                 print(f"Error processing message: {e}")
-
-            webhook_url = os.environ['DISCORD_WEBHOOK_URL']
-            data = {
-                'content': f'Someone just signed up for CodeClimbers via the website!\n\nTimestamp: {formatted_timestamp}\n\n[[[ Keep Climbing ]]]'
-            }
-            response = requests.post(webhook_url, json=data)
-            if response.status_code == 204:
-                print('Message sent successfully.')
-            else:
-                print(f'Failed to send message. Response code: {response.status_code}')
 
 if __name__ == '__main__':
     main()
