@@ -7,11 +7,15 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-# If modifying these SCOPES, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
-def main():
-    # Decode the base64 encoded credentials and write to a file
+def save_token(creds):
+    """Save the credentials to a token.json file."""
+    with open('token.json', 'w') as token:
+        token.write(creds.to_json())
+
+def load_credentials():
+    """Load credentials from the environment and file."""
     if 'GOOGLE_CREDENTIALS' in os.environ:
         credentials_base64 = os.environ['GOOGLE_CREDENTIALS']
         credentials_json = base64.b64decode(credentials_base64).decode('utf-8')
@@ -19,59 +23,63 @@ def main():
             f.write(credentials_json)
     
     creds = None
-    # Decode the base64 encoded token.json and write to a file
     if 'TOKEN_JSON' in os.environ:
         token_base64 = os.environ['TOKEN_JSON']
         token_json = base64.b64decode(token_base64).decode('utf-8')
         with open('token.json', 'w') as f:
             f.write(token_json)
 
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
     if os.path.exists('token.json'):
         creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
+    
+    return creds
+
+def authenticate():
+    """Authenticate the user and obtain new credentials."""
+    flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+    creds = flow.run_local_server(port=0)
+    save_token(creds)
+    return creds
+
+def main():
+    creds = load_credentials()
+    
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+            try:
+                creds.refresh(Request())
+                save_token(creds)
+            except Exception as e:
+                print(f"Error refreshing token: {e}")
+                os.remove('token.json')
+                creds = authenticate()
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
+            creds = authenticate()
 
     service = build('gmail', 'v1', credentials=creds)
 
-    # Calculate the timestamp for 10 minutes ago
     ten_minutes_ago = datetime.utcnow() - timedelta(minutes=10)
-    ten_minutes_ago_str = ten_minutes_ago.strftime('%s')  # Unix epoch time in seconds
+    ten_minutes_ago_str = ten_minutes_ago.isoformat() + 'Z'
 
-    # Call the Gmail API with a query to find messages from the last 10 minutes
     query = f'from:loopsbot@mail.loops.so after:{ten_minutes_ago_str}'
-    print(f"Query: {query}")  # Debugging output
+    print(f"Query: {query}")
     results = service.users().messages().list(userId='me', q=query).execute()
     messages = results.get('messages', [])
+
+    print(f"Messages found: {len(messages)}")
 
     if not messages:
         print('No new messages.')
     else:
         for message in messages:
             msg = service.users().messages().get(userId='me', id=message['id']).execute()
-            print(f"Processing message ID: {message['id']}")  # Debugging output
-
-            # Try to get the timestamp from the email metadata
             try:
                 timestamp = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
-                # Format the timestamp to a readable format
                 timestamp_dt = datetime.strptime(timestamp, '%a, %d %b %Y %H:%M:%S %z')
                 formatted_timestamp = timestamp_dt.strftime('%a, %d %b %Y %H:%M:%S %z')
             except StopIteration:
                 formatted_timestamp = "This is a test."
 
-            # Send message to Discord
             webhook_url = os.environ['DISCORD_WEBHOOK_URL']
             data = {
                 'content': f'Someone just signed up for CodeClimbers via the website! 🚀\n\nTimestamp: {formatted_timestamp}\n\n[[[ Keep Climbing ]]]'
