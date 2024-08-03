@@ -10,13 +10,13 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Configuration
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 MONITORED_EMAIL = os.getenv('MONITORED_EMAIL', 'loopsbot@mail.loops.so')
-CHECK_INTERVAL_MINUTES = int(os.getenv('CHECK_INTERVAL_MINUTES', 10))
+CHECK_INTERVAL_MINUTES = int(os.getenv('CHECK_INTERVAL_MINUTES', 15))
 DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
 
 def save_token(creds):
@@ -95,14 +95,14 @@ def ensure_valid_credentials():
     logger.info("Credentials invalid. Starting new authentication.")
     return authenticate()
 
-def send_discord_notification(timestamp, subject):
+def send_discord_notification(timestamp):
     """Send a notification to Discord."""
     if not DISCORD_WEBHOOK_URL:
         logger.error("Discord webhook URL is not set")
         return
 
     data = {
-        'content': f'New signup for CodeClimbers via the website! 🚀\n\nTimestamp: {timestamp}\nSubject: {subject}\n\n[[[ Keep Climbing ]]]'
+        'content': f'Someone just signed up for CodeClimbers via the website! 🚀\n\nTimestamp: {timestamp}\n\n[[[ Keep Climbing ]]]'
     }
     try:
         response = requests.post(DISCORD_WEBHOOK_URL, json=data)
@@ -133,21 +133,22 @@ def check_emails(service):
                 headers = msg['payload']['headers']
                 
                 date = next((header['value'] for header in headers if header['name'].lower() == 'date'), "Date not available")
-                subject = next((header['value'] for header in headers if header['name'].lower() == 'subject'), "Subject not available")
                 
-                logger.info(f"Processing email - Date: {date}, Subject: {subject}")
+                logger.debug(f"Processing email - Date: {date}")
 
                 if date != "Date not available":
                     try:
                         timestamp_dt = datetime.strptime(date, '%a, %d %b %Y %H:%M:%S %z')
                         formatted_timestamp = timestamp_dt.strftime('%Y-%m-%d %H:%M:%S %Z')
+                        logger.info(f"Sending notification for email received at {formatted_timestamp}")
+                        send_discord_notification(formatted_timestamp)
                     except ValueError:
                         logger.warning(f"Could not parse date: {date}")
-                        formatted_timestamp = date
+                        send_discord_notification(date)
                 else:
-                    formatted_timestamp = "Timestamp not available"
+                    logger.warning("Date not available for an email, sending notification anyway")
+                    send_discord_notification("Timestamp not available")
 
-                send_discord_notification(formatted_timestamp, subject)
             except Exception as e:
                 logger.error(f"Error processing message {message['id']}: {e}")
     except HttpError as error:
