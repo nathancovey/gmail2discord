@@ -2,3 +2,6 @@ credentials.json
 token_base64.txt
 credentials_base64.txt
 token.json
+local_auth.py
+venv
+encode_to_base64.py
