@@ -61,8 +61,13 @@ def main():
 
     query = f'from:loopsbot@mail.loops.so after:{ten_minutes_ago_str}'
     print(f"Query: {query}")
-    results = service.users().messages().list(userId='me', q=query).execute()
-    messages = results.get('messages', [])
+
+    try:
+        results = service.users().messages().list(userId='me', q=query).execute()
+        messages = results.get('messages', [])
+    except Exception as e:
+        print(f"Error fetching messages: {e}")
+        return
 
     print(f"Messages found: {len(messages)}")
 
@@ -70,13 +75,15 @@ def main():
         print('No new messages.')
     else:
         for message in messages:
-            msg = service.users().messages().get(userId='me', id=message['id']).execute()
             try:
+                msg = service.users().messages().get(userId='me', id=message['id']).execute()
                 timestamp = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
                 timestamp_dt = datetime.strptime(timestamp, '%a, %d %b %Y %H:%M:%S %z')
                 formatted_timestamp = timestamp_dt.strftime('%a, %d %b %Y %H:%M:%S %z')
-            except StopIteration:
+                print(f"Message timestamp: {formatted_timestamp}")
+            except Exception as e:
                 formatted_timestamp = "This is a test."
+                print(f"Error processing message: {e}")
 
             webhook_url = os.environ['DISCORD_WEBHOOK_URL']
             data = {
