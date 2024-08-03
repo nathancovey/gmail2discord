@@ -1,7 +1,7 @@
 import os
 import base64
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
@@ -56,10 +56,10 @@ def main():
 
     service = build('gmail', 'v1', credentials=creds)
 
-    current_time = datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
     ten_minutes_ago = current_time - timedelta(minutes=10)
-    current_time_str = current_time.isoformat() + 'Z'
-    ten_minutes_ago_str = ten_minutes_ago.isoformat() + 'Z'
+    current_time_str = current_time.isoformat()
+    ten_minutes_ago_str = ten_minutes_ago.isoformat()
 
     print(f"Current time: {current_time_str}")
     print(f"Ten minutes ago: {ten_minutes_ago_str}")
