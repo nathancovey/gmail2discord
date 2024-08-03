@@ -56,14 +56,20 @@ def main():
 
     service = build('gmail', 'v1', credentials=creds)
 
-    ten_minutes_ago = datetime.utcnow() - timedelta(minutes=10)
+    current_time = datetime.utcnow()
+    ten_minutes_ago = current_time - timedelta(minutes=10)
+    current_time_str = current_time.isoformat() + 'Z'
     ten_minutes_ago_str = ten_minutes_ago.isoformat() + 'Z'
+
+    print(f"Current time: {current_time_str}")
+    print(f"Ten minutes ago: {ten_minutes_ago_str}")
 
     query = f'from:loopsbot@mail.loops.so after:{ten_minutes_ago_str}'
     print(f"Query: {query}")
 
     try:
         results = service.users().messages().list(userId='me', q=query).execute()
+        print("API response:", results)
         messages = results.get('messages', [])
     except Exception as e:
         print(f"Error fetching messages: {e}")
