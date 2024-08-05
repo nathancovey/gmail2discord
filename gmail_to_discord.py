@@ -64,8 +64,7 @@ def main():
     print(f"Current time: {current_time_str}")
     print(f"Ten minutes ago: {ten_minutes_ago_str}")
 
-    # Simplify query to fetch all messages first
-    query = ''
+    query = ''  # Simplified query to fetch all messages for testing
     print(f"Query: {query}")
 
     try:
@@ -88,6 +87,8 @@ def main():
                 timestamp_dt = datetime.strptime(timestamp, '%a, %d %b %Y %H:%M:%S %z')
                 formatted_timestamp = timestamp_dt.strftime('%a, %d %b %Y %H:%M:%S %z')
                 print(f"Message timestamp: {formatted_timestamp}")
+                print(f"Timestamp as datetime: {timestamp_dt}")
+                print(f"Comparison datetime: {ten_minutes_ago}")
 
                 # Check if the message was received in the last 10 minutes
                 if timestamp_dt > ten_minutes_ago:
@@ -104,7 +105,6 @@ def main():
                     print('Message received outside the 10-minute window.')
 
             except Exception as e:
-                formatted_timestamp = "This is a test."
                 print(f"Error processing message: {e}")
 
 if __name__ == '__main__':
