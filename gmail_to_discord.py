@@ -58,13 +58,13 @@ def main():
 
     current_time = datetime.now(timezone.utc)
     ten_minutes_ago = current_time - timedelta(minutes=10)
-    current_time_str = current_time.isoformat()
-    ten_minutes_ago_str = ten_minutes_ago.isoformat()
+    current_time_str = current_time.isoformat() + 'Z'
+    ten_minutes_ago_str = ten_minutes_ago.isoformat() + 'Z'
 
     print(f"Current time: {current_time_str}")
     print(f"Ten minutes ago: {ten_minutes_ago_str}")
 
-    query = ''  # Simplified query to fetch all messages for testing
+    query = f'after:{ten_minutes_ago_str} before:{current_time_str}'
     print(f"Query: {query}")
 
     try:
