@@ -118,6 +118,7 @@ def main():
                     response = requests.post(webhook_url, json=data)
                     if response.status_code == 204:
                         print('Message sent successfully.')
+                        processed_messages.add(message_id)
                         save_processed_message(message_id)
                     else:
                         print(f'Failed to send message. Response code: {response.status_code}')
