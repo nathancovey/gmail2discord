@@ -103,7 +103,11 @@ def main():
             try:
                 msg = service.users().messages().get(userId='me', id=message_id).execute()
                 timestamp = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
+                
+                # Fix the timestamp parsing issue with proper handling of (UTC)
+                timestamp = timestamp.replace('(UTC)', '').strip()
                 timestamp_dt = datetime.strptime(timestamp, '%a, %d %b %Y %H:%M:%S %z')
+                
                 formatted_timestamp = timestamp_dt.strftime('%a, %d %b %Y %H:%M:%S %z')
                 print(f"Message timestamp: {formatted_timestamp}")
                 print(f"Timestamp as datetime: {timestamp_dt}")
