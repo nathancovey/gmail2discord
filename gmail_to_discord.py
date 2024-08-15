@@ -72,11 +72,9 @@ def main():
 
     current_time = datetime.now(timezone.utc)
     ten_minutes_ago = current_time - timedelta(minutes=10)
-    current_time_str = current_time.isoformat()
-    ten_minutes_ago_str = ten_minutes_ago.isoformat()
 
-    print(f"Current time: {current_time_str}")
-    print(f"Ten minutes ago: {ten_minutes_ago_str}")
+    print(f"Current time: {current_time.isoformat()}")
+    print(f"Ten minutes ago: {ten_minutes_ago.isoformat()}")
 
     # Improved query: Only get messages between the last 10 minutes.
     query = f'after:{int(ten_minutes_ago.timestamp())} before:{int(current_time.timestamp())}'
@@ -104,7 +102,7 @@ def main():
             try:
                 msg = service.users().messages().get(userId='me', id=message_id).execute()
                 timestamp = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
-                
+
                 # Fix the timestamp parsing issue with proper handling of (UTC)
                 timestamp = timestamp.replace('(UTC)', '').strip()
                 timestamp_dt = datetime.strptime(timestamp, '%a, %d %b %Y %H:%M:%S %z')
