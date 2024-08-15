@@ -55,7 +55,7 @@ def main():
             return  # Exit if no valid credentials
 
     service = build('gmail', 'v1', credentials=creds)
-
+    
     current_time = datetime.now(timezone.utc)
     ten_minutes_ago = current_time - timedelta(minutes=10)
 
@@ -80,8 +80,10 @@ def main():
         print('No new messages.')
     else:
         for message in messages:
+            message_id = message['id']
+
             try:
-                msg = service.users().messages().get(userId='me', id=message['id']).execute()
+                msg = service.users().messages().get(userId='me', id=message_id).execute()
                 timestamp = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
 
                 # Fix the timestamp parsing issue with proper handling of (UTC)
@@ -92,6 +94,11 @@ def main():
                 print(f"Message timestamp: {formatted_timestamp}")
                 print(f"Timestamp as datetime: {timestamp_dt}")
                 print(f"Comparison datetime: {ten_minutes_ago}")
+
+                # Check if the timestamp ends with +0000 (UTC)
+                if not formatted_timestamp.endswith('+0000'):
+                    print(f"Skipping message due to non-UTC timestamp: {formatted_timestamp}")
+                    continue  # Skip the message if it doesn't end with +0000
 
                 # Check if the message was received in the last 10 minutes
                 if ten_minutes_ago <= timestamp_dt <= current_time:
