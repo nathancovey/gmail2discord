@@ -78,7 +78,8 @@ def main():
     print(f"Current time: {current_time_str}")
     print(f"Ten minutes ago: {ten_minutes_ago_str}")
 
-    query = f'after:{int(ten_minutes_ago.timestamp())}'
+    # Improved query: Only get messages between the last 10 minutes.
+    query = f'after:{int(ten_minutes_ago.timestamp())} before:{int(current_time.timestamp())}'
     print(f"Query: {query}")
 
     try:
@@ -114,7 +115,7 @@ def main():
                 print(f"Comparison datetime: {ten_minutes_ago}")
 
                 # Check if the message was received in the last 10 minutes
-                if timestamp_dt > ten_minutes_ago:
+                if ten_minutes_ago <= timestamp_dt <= current_time:
                     webhook_url = os.environ['DISCORD_WEBHOOK_URL']
                     data = {
                         'content': f'Someone just signed up for CodeClimbers via the website!\n\nTimestamp: {formatted_timestamp}\n\n[[[ Keep Climbing ]]]'
