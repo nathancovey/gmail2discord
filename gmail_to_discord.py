@@ -7,7 +7,6 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
-PROCESSED_MESSAGES_FILE = 'processed_messages.txt'
 
 def save_token(creds):
     """Save the credentials to a token.json file and update the environment variable."""
@@ -39,18 +38,6 @@ def load_credentials():
     
     return creds
 
-def load_processed_messages():
-    """Load the set of processed message IDs from a file."""
-    if os.path.exists(PROCESSED_MESSAGES_FILE):
-        with open(PROCESSED_MESSAGES_FILE, 'r') as file:
-            return set(file.read().splitlines())
-    return set()
-
-def save_processed_message(message_id):
-    """Save a message ID to the processed messages file."""
-    with open(PROCESSED_MESSAGES_FILE, 'a') as file:
-        file.write(f'{message_id}\n')
-
 def main():
     creds = load_credentials()
     
@@ -68,7 +55,6 @@ def main():
             return  # Exit if no valid credentials
 
     service = build('gmail', 'v1', credentials=creds)
-    processed_messages = load_processed_messages()
 
     current_time = datetime.now(timezone.utc)
     ten_minutes_ago = current_time - timedelta(minutes=10)
@@ -94,13 +80,8 @@ def main():
         print('No new messages.')
     else:
         for message in messages:
-            message_id = message['id']
-            if message_id in processed_messages:
-                print(f'Message {message_id} already processed.')
-                continue
-
             try:
-                msg = service.users().messages().get(userId='me', id=message_id).execute()
+                msg = service.users().messages().get(userId='me', id=message['id']).execute()
                 timestamp = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
 
                 # Fix the timestamp parsing issue with proper handling of (UTC)
@@ -121,7 +102,6 @@ def main():
                     response = requests.post(webhook_url, json=data)
                     if response.status_code == 204:
                         print('Message sent successfully.')
-                        save_processed_message(message_id)  # Save the processed message immediately after sending
                     else:
                         print(f'Failed to send message. Response code: {response.status_code}')
                 else:
