@@ -33,7 +33,7 @@
     <li>Download your credentials as <code>credentials.json</code> and place it in the project directory.</li>
     <li>Run the authorization flow to generate the <code>token.json</code> file.</li>
   </ul>
-
+  <br>
   <li><strong>Set up Heroku:</strong></li>
   <ul>
     <li>Create a new Heroku app:</li>
@@ -50,7 +50,7 @@
     <pre><code>heroku addons:create scheduler:standard</code></pre>
     <li>Set up the job to run <code>python3 gmail_to_discord.py</code> every 10 minutes in the scheduler dashboard.</li>
   </ul>
-
+  <br>
   <li><strong>View Logs:</strong></li>
   <ul>
     <li>To view logs and troubleshoot:</li>
