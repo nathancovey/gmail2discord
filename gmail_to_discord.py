@@ -55,14 +55,14 @@ def main():
             return  # Exit if no valid credentials
 
     service = build('gmail', 'v1', credentials=creds)
-    
+
     current_time = datetime.now(timezone.utc)
     ten_minutes_ago = current_time - timedelta(minutes=10)
 
     print(f"Current time: {current_time.isoformat()}")
     print(f"Ten minutes ago: {ten_minutes_ago.isoformat()}")
 
-    # Improved query: Only get messages between the last 10 minutes.
+    # Query: Only get messages between the last 10 minutes.
     query = f'after:{int(ten_minutes_ago.timestamp())} before:{int(current_time.timestamp())}'
     print(f"Query: {query}")
 
@@ -80,10 +80,8 @@ def main():
         print('No new messages.')
     else:
         for message in messages:
-            message_id = message['id']
-
             try:
-                msg = service.users().messages().get(userId='me', id=message_id).execute()
+                msg = service.users().messages().get(userId='me', id=message['id']).execute()
                 timestamp = next(header['value'] for header in msg['payload']['headers'] if header['name'] == 'Date')
 
                 # Fix the timestamp parsing issue with proper handling of (UTC)
