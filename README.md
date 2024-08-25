@@ -60,7 +60,6 @@
 
 <h2>Important Notes</h2>
 <ul>
-  <li>Make sure your <code>processed_messages.txt</code> file is updated to avoid duplicate notifications.</li>
   <li>Ensure that your Google Cloud credentials and tokens are properly set up and stored securely.</li>
 </ul>
 
